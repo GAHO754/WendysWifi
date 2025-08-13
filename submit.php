@@ -6,59 +6,58 @@ $GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzSrpqiizNcI5p3d0v5gSp
 
 // Ruta del CSV (Excel-abrible). Asegúrate de que el servidor tenga permisos de escritura en esta carpeta.
 $CSV_PATH = __DIR__ . '/registros.csv';
-
-// Zona horaria para timestamps del servidor
 date_default_timezone_set('America/Mexico_City');
 
-// --- Seguridad básica CORS (mismo origen no lo necesita, pero ayuda si mueves front a otro host) ---
+// ====== HEADERS / CORS ======
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Methods: POST, OPTIONS, GET');
 header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); echo json_encode(['ok'=>true]); exit; }
 
-// --- Leer JSON del cliente ---
+// ====== RUTA DE PRUEBA PING ======
+if (isset($_GET['ping'])) { echo json_encode(['ok'=>true, 'ping'=>'pong']); exit; }
+
+// ====== DEBUG CONTROLADO (si necesitas ver errores en pantalla mientras pruebas)
+// ini_set('display_errors', 1); error_reporting(E_ALL);
+
+// ====== LEE PAYLOAD JSON ======
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
 
-if (!$data || !isset($data['nombre'], $data['correo'], $data['telefono'], $data['cumple'], $data['acepta'])) {
+if (!$data || !isset($data['nombre'],$data['correo'],$data['telefono'],$data['cumple'],$data['acepta'])) {
   http_response_code(400);
-  echo json_encode(['ok' => false, 'error' => 'Payload inválido']);
+  echo json_encode(['ok'=>false,'error'=>'Payload inválido o incompleto','raw'=>$raw]);
   exit;
 }
 
-// Sanitizar básico
-function clean($s) { return trim(filter_var($s, FILTER_UNSAFE_RAW)); }
-
+// ====== SANITIZA ======
+function clean($s){ return trim(filter_var($s, FILTER_UNSAFE_RAW)); }
 $nombre   = clean($data['nombre']);
 $correo   = clean($data['correo']);
-$telefono = preg_replace('/\D+/', '', $data['telefono']); // solo dígitos
+$telefono = preg_replace('/\D+/', '', (string)$data['telefono']);
 $cumple   = clean($data['cumple']);
 $acepta   = !!$data['acepta'];
 
-// Generamos un ID único para anti-duplicados en el Sheet
-$docId    = bin2hex(random_bytes(8)); // 16 hex chars
-$ts       = date('c'); // ISO8601 del servidor
+// ====== GENERA docId y timestamp servidor ======
+$docId = bin2hex(random_bytes(8));
+$ts    = date('c'); // ISO8601
 
-// --- 1) Guardar en CSV (Excel) ---
-$csvHeader = ['docId','timestamp','nombre','correo','telefono','cumple','acepta'];
-$csvRow    = [$docId, $ts, $nombre, $correo, $telefono, $cumple, $acepta ? 'TRUE' : 'FALSE'];
-
+// ====== CSV: escribe encabezado si no existe ======
 $needHeader = !file_exists($CSV_PATH) || filesize($CSV_PATH) === 0;
-
 $fh = @fopen($CSV_PATH, 'a');
 if ($fh === false) {
   http_response_code(500);
-  echo json_encode(['ok' => false, 'error' => 'No se pudo abrir/crear el CSV en el servidor']);
+  echo json_encode(['ok'=>false, 'error'=>'No se pudo abrir/crear el CSV. Permisos de escritura insuficientes.', 'path'=>$CSV_PATH]);
   exit;
 }
 if ($needHeader) {
-  fputcsv($fh, $csvHeader);
+  fputcsv($fh, ['docId','timestamp','nombre','correo','telefono','cumple','acepta']);
 }
-fputcsv($fh, $csvRow);
+fputcsv($fh, [$docId, $ts, $nombre, $correo, $telefono, $cumple, $acepta ? 'TRUE' : 'FALSE']);
 fclose($fh);
 
-// --- 2) Reenviar a Google Sheets (Apps Script Web App) ---
+// ====== REENVÍA A GOOGLE SHEETS ======
 $payload = [
   'id'        => $docId,
   'timestamp' => $ts,
@@ -69,29 +68,45 @@ $payload = [
   'acepta'    => $acepta ? 'true' : 'false'
 ];
 
-$ch = curl_init($GS_WEBAPP_URL);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
+$gs_http = null; $gs_err = null; $gs_resp = null;
 
-// Puedes elegir JSON O form-urlencoded. Ambos los soporta el Apps Script que te di.
-// --- JSON (descomenta estas 2 líneas y comenta el form-urlencoded si prefieres JSON) ---
-// curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-// curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+// Preferimos cURL si existe; si no, usamos file_get_contents
+if (function_exists('curl_init')) {
+  $ch = curl_init($GS_WEBAPP_URL);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_POST, true);
+  // Puedes cambiar a JSON si tu Apps Script lo espera:
+  // curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+  // curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+  // Enviamos form-urlencoded (lo soporta el script recomendado)
+  curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+  $gs_resp = curl_exec($ch);
+  $gs_err  = curl_error($ch);
+  $gs_http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+} else {
+  // Fallback sin cURL
+  $ctx = stream_context_create([
+    'http' => [
+      'method'  => 'POST',
+      'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+      'content' => http_build_query($payload),
+      'ignore_errors' => true
+    ]
+  ]);
+  $gs_resp = @file_get_contents($GS_WEBAPP_URL, false, $ctx);
+  // Intentamos extraer el HTTP code
+  if (isset($http_response_header) && preg_match('#HTTP/\S+\s+(\d{3})#', $http_response_header[0], $m)) {
+    $gs_http = (int)$m[1];
+  }
+  $gs_err = $gs_resp === false ? 'file_get_contents failed' : null;
+}
 
-// --- Form-urlencoded (recomendado si dejaste el doPost con soporte a ambos) ---
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
-
-$resp = curl_exec($ch);
-$err  = curl_error($ch);
-$http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-// Nota: aunque el Web App falle, ya guardamos en CSV. Reportamos ok=true pero
-// devolvemos meta para depurar si quieres.
+// No bloqueamos éxito por fallo del reenvío; ya guardamos CSV
 echo json_encode([
   'ok' => true,
   'csv' => basename($CSV_PATH),
-  'gs_webapp_http' => $http,
-  'gs_error' => $err ?: null,
-  'gs_response' => $resp ?: null
+  'gs_webapp_http' => $gs_http,
+  'gs_error' => $gs_err,
+  'gs_response' => $gs_resp
 ]);
