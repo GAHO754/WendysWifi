@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conéctate al WiFi</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons8-loyalty-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons8-loyalty-32.png">
+
+  <!-- Si tu hosting usa CSP estricta, permite enviar formularios a Google Script y mostrar su iframe -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 form-action 'self' https://script.google.com;
+                 frame-src 'self' https://script.google.com;">
+  <style>.hidden{display:none}</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bienvenido</h1>
+    <p>Conéctate y recibe promociones exclusivas</p>
+
+    <!-- Iframe “sumidero” para que el form no redirija la página -->
+    <iframe name="sheet-transport" id="sheet-transport" class="hidden"></iframe>
+
+    <!-- Mensaje de gracias -->
+    <div id="mensaje" class="hidden">✅ Gracias, ya estás conectado.</div>
+
+    <!-- Form: se envía DIRECTO al Web App de Apps Script -->
+    <form id="wifi-form" method="post" target="sheet-transport">
+      <!-- Campos visibles -->
+      <input type="text"  id="nombre"   name="nombre"   placeholder="Nombre completo" required />
+      <input type="email" id="correo"   name="correo"   placeholder="Correo electrónico" required />
+      <input type="tel"   id="telefono" name="telefono" placeholder="Número de celular" required />
+      <input type="date"  id="cumple"   name="cumple"   placeholder="Fecha de cumpleaños" required />
+      <label>
+        <input type="checkbox" id="acepta" name="acepta" value="1" required />
+        Acepto los <a href="terminos.html" target="_blank">términos y condiciones</a>
+      </label>
+
+      <!-- Campos ocultos que el script usa -->
+      <input type="hidden" name="id"        id="docId">
+      <input type="hidden" name="timestamp" id="ts">
+
+      <button type="submit">Conectarme</button>
+    </form>
+  </div>
+
+  <script>
+    // 1) Pega tu URL del Web App aquí:
+    const WEB_APP_URL = 'WEB_APP_URL_AQUI';
+
+    const form = document.getElementById('wifi-form');
+    const msg  = document.getElementById('mensaje');
+
+    // Asegura que el form apunte al Web App
+    form.action = WEB_APP_URL;
+
+    form.addEventListener('submit', (e) => {
+      // Genera un ID único para anti-duplicados en la hoja
+      const id = 'web-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+      document.getElementById('docId').value = id;
+      document.getElementById('ts').value    = new Date().toISOString();
+
+      // Deja que el form se envíe al iframe (no-cambia la página)
+      // y muestra el mensaje de gracias al usuario
+      setTimeout(() => {
+        form.classList.add('hidden');
+        msg.classList.remove('hidden');
+      }, 50);
+    });
+  </script>
+</body>
+</html>

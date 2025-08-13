@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons8-loyalty-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons8-loyalty-32.png">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Términos y Condiciones</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background-color: #f7f7f7;
+    }
+
+    .container {
+      background: rgb(255, 255, 255);
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    p {
+      line-height: 1.6;
+    }
+
+    .btn-volver {
+      display: block;
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      text-align: center;
+      background-color: #007bff;
+      color: white;
+      border-radius: 0.5rem;
+      text-decoration: none;
+    }
+
+    .btn-volver:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Términos y Condiciones del Uso del WiFi</h1>
+
+    <p>
+      Al utilizar este servicio de WiFi gratuito, aceptas que recopilamos datos personales como nombre, correo electrónico, número telefónico y fecha de nacimiento, con el único fin de ofrecerte promociones, mejorar tu experiencia y enviarte comunicaciones personalizadas.
+    </p>
+
+    <p>
+      Tus datos no serán vendidos ni compartidos con terceros. Puedes solicitar en cualquier momento la eliminación de tus datos enviando un correo a: <strong>atencionaclientes@gahospitality.com</strong>.
+    </p>
+
+    <p>
+      El acceso al servicio es voluntario y depende de la aceptación de estos términos. Si no estás de acuerdo, por favor no completes el registro ni uses el WiFi.
+    </p>
+
+    <p>
+      Nos reservamos el derecho de modificar estas condiciones en cualquier momento. Cualquier cambio será publicado en este mismo sitio.
+    </p>
+
+    <a href="#" id="btnVolver" class="btn-volver">⬅ Volver al registro</a>
+  </div>
+  
+`
+<script>
+  document.getElementById('btnVolver').addEventListener('click', (e) => {
+    e.preventDefault();
+    // Si venimos desde index, vuelve sin recargar
+    if (history.length > 1) {
+      history.back();
+    } else {
+      // Fallback por si se entra directo a terminos.html
+      location.href = 'index.html';
+    }
+  });
+</script>
+
+</body>
+</html>
