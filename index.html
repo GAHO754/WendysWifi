@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" type="image/png" sizes="16x16" href="icons8-loyalty-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="icons8-loyalty-32.png">
+
+  <!-- (Opcional pero recomendado) CSP: permite conectar/postear a Apps Script -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 connect-src 'self' https://script.google.com https://script.googleusercontent.com;
+                 form-action 'self' https://script.google.com;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 script-src 'self' 'unsafe-inline'">
 </head>
 <body>
   <div class="container">
@@ -19,20 +28,19 @@
       <input type="tel"   id="telefono" name="telefono" placeholder="Número de celular" autocomplete="tel" required />
       <input type="date"  id="cumple"   name="cumple"   placeholder="Fecha de cumpleaños" autocomplete="bday" required />
 
-      <!-- Honeypot anti-spam (debe quedar oculto con CSS si quieres) -->
+      <!-- Honeypot anti-spam (oculto) -->
       <input type="text" id="empresa" name="empresa" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;">
 
-      <label style="display:block;margin-top:1rem;">
+      <label>
         <input type="checkbox" id="acepta" required />
         Acepto los <a href="terminos.html">términos y condiciones</a>
       </label>
-
       <button type="submit">Conectarme</button>
     </form>
 
     <div id="mensaje" style="display:none;">✅ Gracias, ya estás conectado.</div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
