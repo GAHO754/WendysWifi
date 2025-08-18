@@ -92,3 +92,85 @@ footer {
   color: #000000;
 }
 
+/* ========== TUS ESTILOS EXISTENTES (se quedan tal cual) ========== */
+/* (no los repito aquí) */
+
+
+/* ========== AJUSTES PARA EL FORM EMBEBIDO ========== */
+
+/* Permite hacer scroll si el formulario es más alto que la pantalla */
+body {
+  overflow-y: auto;
+}
+
+/* Ensancha solo esta tarjeta (el embed de Google Forms necesita más ancho) */
+.container.container--form {
+  max-width: 820px;           /* antes: 400px */
+  width: 100%;
+  padding: 1.5rem;            /* un poco más compacta */
+  background: rgba(255,255,255,0.96); /* leve transparencia para ver el fondo */
+  backdrop-filter: blur(2px); /* si el navegador lo soporta */
+}
+
+/* Iframe responsivo dentro de la tarjeta */
+.form-embed {
+  display: block;
+  width: 100%;
+  height: 70vh;               /* alto relativo a la pantalla */
+  min-height: 680px;          /* asegura buen alto en desktop */
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* Texto del enlace fallback más discreto */
+.iframe-fallback {
+  margin-top: .75rem;
+  font-size: .9rem;
+}
+
+/* En móviles: menos centrado rígido y más alto usable */
+@media (max-width: 600px) {
+  html, body {
+    height: auto;             /* permite crecer */
+  }
+  body {
+    align-items: flex-start;  /* evita recortes en vertical */
+  }
+  .container.container--form {
+    margin: 2rem 1rem;
+    max-width: 100%;
+  }
+  .form-embed {
+    height: 85vh;
+    min-height: 820px;
+  }
+}
+/* Aviso de éxito */
+.success {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: #eaffea;                 /* verde suave */
+  border: 1px solid #c2f0c2;
+  color: #135c13;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+.success-actions {
+  margin-top: .75rem;
+}
+
+.btn-primary {
+  appearance: none;
+  border: none;
+  border-radius: .5rem;
+  padding: .7rem 1.1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  background: #007bff;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+}
+.btn-primary:hover { background: #0056b3; }
