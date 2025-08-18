@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conéctate al WiFi</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons8-loyalty-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons8-loyalty-32.png">
+</head>
+<body>
+  <div class="container container--form">
+    <h1>Bienvenido</h1>
+    <p>Conéctate y recibe promociones exclusivas</p>
+
+    <!-- IFRAME DEL FORM con id -->
+    <iframe
+      id="gform"
+      class="form-embed"
+      src="https://docs.google.com/forms/d/e/1FAIpQLSfEsL1cF6j-PquZdyDpoDY1Wq2wHPtiAQzIy53Hsk9HFcBfvw/viewform?embedded=true"
+      frameborder="0"
+      marginheight="0"
+      marginwidth="0"
+      allowfullscreen>
+      Cargando…
+    </iframe>
+
+    <!-- Mensaje de éxito (oculto al inicio) -->
+    <div id="mensaje-ok" class="success" style="display:none;">
+      ✅ Gracias, ya estás conectado.
+      <div class="success-actions">
+        <button id="btn-conectar" class="btn-primary">Conectarme ahora</button>
+      </div>
+    </div>
+
+    <!-- Enlace por si el iframe no carga -->
+    <p class="iframe-fallback">
+      Si no ves el formulario, <a href="https://docs.google.com/forms/d/e/1FAIpQLSfEsL1cF6j-PquZdyDpoDY1Wq2wHPtiAQzIy53Hsk9HFcBfvw/viewform" target="_blank" rel="noopener">ábrelo aquí</a>.
+    </p>
+  </div>
+
+  <script>
+    // ===== Configurable =====
+    // URL de “desbloqueo” tras registro (elige tu portal, o algo simple como neverssl.com)
+    const AFTER_SUBMIT_URL = 'http://neverssl.com';   // o 'https://www.google.com'
+    const AUTO_REDIRECT_MS = 1500;                    // 0 para no redirigir automáticamente
+
+    // ===== Lógica: detectar confirmación del form dentro del iframe =====
+    const iframe = document.getElementById('gform');
+    const mensajeOk = document.getElementById('mensaje-ok');
+    const btnConectar = document.getElementById('btn-conectar');
+
+    let loadCount = 0;
+    iframe.addEventListener('load', () => {
+      loadCount += 1;
+      // 1er load: formulario inicial
+      // 2do load: pantalla de "Se registró tu respuesta." (confirmación)
+      if (loadCount >= 2) {
+        // Mostrar mensaje y botón
+        mensajeOk.style.display = 'block';
+        // Opcional: ocultar el iframe para dejar solo el mensaje
+        // iframe.style.display = 'none';
+
+        // Redirección automática (si config > 0)
+        if (AUTO_REDIRECT_MS > 0) {
+          setTimeout(() => {
+            try { top.location.href = AFTER_SUBMIT_URL; }
+            catch(e) { window.location.href = AFTER_SUBMIT_URL; }
+          }, AUTO_REDIRECT_MS);
+        }
+      }
+    });
+
+    // Botón manual “Conectarme ahora”
+    btnConectar.addEventListener('click', () => {
+      try { top.location.href = AFTER_SUBMIT_URL; }
+      catch(e) { window.location.href = AFTER_SUBMIT_URL; }
+    });
+  </script>
+</body>
+</html>
